@@ -1,0 +1,6 @@
+gateway_id,gateway_name,base_fee_pct,sla_availability_pct,target_p95_latency_ms,max_tps_capacity
+gw_hdfc,HDFC Direct NetBanking/UPI,1.20,99.90,1800,1200
+gw_razorpay,Razorpay Enterprise Aggregator,1.85,99.99,2100,3500
+gw_payu,PayU Enterprise Gateway,1.70,99.95,2300,2800
+gw_billdesk,BillDesk Infrastructure,1.45,99.85,2500,1800
+gw_phonepe,PhonePe Direct Switch,1.35,99.95,1600,4000
