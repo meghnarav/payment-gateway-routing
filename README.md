@@ -53,7 +53,7 @@ Payment gateways experience transient network degradation, bank-side latency spi
 
 1. **Clone repository:**
    ```bash
-   git clone [https://github.com/your-username/payment-gateway-routing.git](https://github.com/your-username/payment-gateway-routing.git)
+   git clone https://github.com/meghnarav/payment-gateway-routing.git
    cd payment-gateway-routing
    ```
 
