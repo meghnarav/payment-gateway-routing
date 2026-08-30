@@ -20,7 +20,7 @@ Merchant Checkout Intent
 │ Primary Gateway │         │ Backup Gateway  │
 │ (e.g. HDFC)     │         │ (e.g. Razorpay) │
 └─────────────────┘         └─────────────────┘
-```text
+```
 
 ---
 
@@ -55,24 +55,24 @@ Payment gateways experience transient network degradation, bank-side latency spi
    ```bash
    git clone [https://github.com/your-username/payment-gateway-routing.git](https://github.com/your-username/payment-gateway-routing.git)
    cd payment-gateway-routing
-   ```bash
+   ```
 
 2. **Install dependencies:**
     ```bash
     pip install -r requirements.txt
-    ```bash
+    ```
 
 3. ****
     ```bash
     python src/generate_data.py
-    ```bash
+    ```
 
 4. ****
     ```bash
     python src/analyze_experiment.py
-    ```bash
+    ```
 
 5. ****
     ```bash
     python src/simulate_routing.py
-    ```bash
+    ```
