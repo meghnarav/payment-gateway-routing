@@ -62,17 +62,17 @@ Payment gateways experience transient network degradation, bank-side latency spi
     pip install -r requirements.txt
     ```
 
-3. ****
+3. **Generate transaction dataset:**
     ```bash
     python src/generate_data.py
     ```
 
-4. ****
+4. **Run hypothesis testing:**
     ```bash
     python src/analyze_experiment.py
     ```
 
-5. ****
+5. **Execute cost evaluation:**
     ```bash
     python src/simulate_routing.py
     ```
