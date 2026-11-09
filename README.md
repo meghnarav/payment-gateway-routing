@@ -23,7 +23,7 @@ flowchart LR
     API -->|Selected gateway| GatewayA[Gateway A]
     API -->|Selected gateway| GatewayB[Gateway B]
 
-    GatewayA -->|Async outcome| Webhook[POST /webhook/{gateway}]
+    GatewayA -->|Async outcome| Webhook["POST /webhook/{gateway}"]
     GatewayB -->|Async outcome| Webhook
     Webhook -->|Publish payment outcome| PubSub[Redis Pub/Sub]
     PubSub --> Worker[Outcome worker]
