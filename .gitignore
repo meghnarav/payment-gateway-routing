@@ -46,3 +46,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+dashboard/node_modules/
+dashboard/.next/
+.vercel

@@ -243,3 +243,24 @@ python3 src/simulate_routing.py
 
 These scripts support historical experiment analysis; the FastAPI, Redis, and
 worker services provide the real-time production-oriented path.
+
+## Deploy the Next.js dashboard to Vercel
+
+The dashboard is a standalone Next.js App Router project in
+[`dashboard/`](./dashboard/), with repository-level Vercel settings in
+[`vercel.json`](./vercel.json).
+
+From the repository root, authenticate once:
+
+```bash
+npx vercel login
+```
+
+Deploy the dashboard to production with one terminal command:
+
+```bash
+cd dashboard && npm run deploy:vercel
+```
+
+The dashboard's **Export system report** control downloads the current
+simulation summary as either JSON or CSV.
