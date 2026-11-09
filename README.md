@@ -76,3 +76,49 @@ Payment gateways experience transient network degradation, bank-side latency spi
     ```bash
     python src/simulate_routing.py
     ```
+
+## Real-Time API
+
+Install the dependencies, start Redis, and run the FastAPI service with
+Uvicorn:
+
+```bash
+docker run --name payment-routing-redis -p 6379:6379 -d redis:7
+uvicorn src.api:app --reload
+```
+
+Run the outcome worker in a separate process after applying
+`sql/05_payment_transactions.sql`:
+
+```bash
+python -m src.worker
+```
+
+Route a payment by sending a `POST` request to `/route-payment`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/route-payment \
+  -H "Content-Type: application/json" \
+  -d '{"merchant_id":"merchant-123","amount":750,"currency":"INR"}'
+```
+
+The service stores gateway outcomes in Redis Sorted Sets using event timestamps
+as scores. Call `record_gateway_event("Gateway A", success=True)` from the
+payment-result flow after each gateway attempt. `get_gateway_health` calculates
+the Payment Success Rate over the rolling 15-minute window. Payments use
+`Gateway A` by default and switch to `Gateway B` when Gateway A's PSR drops
+below 75%. Interactive API documentation is available at
+`http://127.0.0.1:8000/docs`.
+
+Payment providers can report asynchronous outcomes through the webhook endpoint:
+
+```bash
+curl -X POST http://127.0.0.1:8000/webhook/Gateway%20A \
+  -H "Content-Type: application/json" \
+  -d '{"transaction_id":"<transaction-id-from-route-payment>","success":true}'
+```
+
+The webhook only publishes the event to Redis Pub/Sub and returns immediately.
+The worker consumes the event, updates the gateway's rolling health window, and
+upserts the final transaction status in PostgreSQL. Set `DATABASE_URL` and
+`REDIS_URL` to override the default connection URLs.
