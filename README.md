@@ -164,6 +164,10 @@ REDIS_URL=redis://redis:6379/0
 DATABASE_URL=postgresql://routing:routing@postgres:5432/payment_routing
 ```
 
+These database credentials match the `postgres` service configuration in
+[`docker-compose.yml`](./docker-compose.yml). For local development outside
+Compose, use the same credentials with `localhost` as shown below.
+
 To run in the background:
 
 ```bash
