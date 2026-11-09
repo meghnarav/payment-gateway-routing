@@ -1,5 +1,5 @@
 import { AlertTriangle, Gauge, Radio, RotateCcw, SlidersHorizontal, ToggleRight, Zap } from "lucide-react";
-import type { SimulationAlgorithm, GatewaySimulation } from "../lib/usePaymentSimulation";
+import type { SimulationAlgorithm, GatewaySimulation } from "@/app/lib/usePaymentSimulation";
 
 type Props = {
   algorithm: SimulationAlgorithm;

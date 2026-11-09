@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import type { GatewaySimulation } from "../lib/usePaymentSimulation";
+import type { GatewaySimulation } from "@/app/lib/usePaymentSimulation";
 
 type Packet = {
   id: number;

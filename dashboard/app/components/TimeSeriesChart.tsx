@@ -1,7 +1,7 @@
 "use client";
 
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import type { PsrHistoryPoint } from "../lib/usePaymentSimulation";
+import type { PsrHistoryPoint } from "@/app/lib/usePaymentSimulation";
 
 export function TimeSeriesChart({ data }: { data: PsrHistoryPoint[] }) {
   return (

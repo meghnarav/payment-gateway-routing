@@ -7,12 +7,12 @@ import {
   GitBranch,
   Radio
 } from "lucide-react";
-import { ChaosControlDeck } from "./components/ChaosControlDeck";
-import { FlowBoard } from "./components/FlowBoard";
-import { MetricGrid } from "./components/MetricGrid";
-import { TimeSeriesChart } from "./components/TimeSeriesChart";
-import { ExportReportButton } from "./components/ExportReportButton";
-import { usePaymentSimulation } from "./lib/usePaymentSimulation";
+import { ChaosControlDeck } from "@/app/components/ChaosControlDeck";
+import { FlowBoard } from "@/app/components/FlowBoard";
+import { MetricGrid } from "@/app/components/MetricGrid";
+import { TimeSeriesChart } from "@/app/components/TimeSeriesChart";
+import { ExportReportButton } from "@/app/components/ExportReportButton";
+import { usePaymentSimulation } from "@/app/lib/usePaymentSimulation";
 
 export default function Home() {
   const simulation = usePaymentSimulation();

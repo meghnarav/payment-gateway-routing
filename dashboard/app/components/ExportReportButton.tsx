@@ -2,8 +2,8 @@
 
 import { Download } from "lucide-react";
 import { useState } from "react";
-import { createExperimentReport, reportToCsv, type ReportFormat } from "../lib/exportReport";
-import type { GatewaySimulation, SimulationAlgorithm } from "../lib/usePaymentSimulation";
+import { createExperimentReport, reportToCsv, type ReportFormat } from "@/app/lib/exportReport";
+import type { GatewaySimulation, SimulationAlgorithm } from "@/app/lib/usePaymentSimulation";
 
 type Props = {
   algorithm: SimulationAlgorithm;
