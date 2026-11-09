@@ -2,15 +2,18 @@ import { Activity, BadgeCheck, CircleDollarSign, Percent, TrendingUp } from "luc
 
 type Props = {
   overallPsr: number;
+  psrDelta: number;
   recoveredRevenue: number;
   outage: boolean;
 };
 
-export function MetricGrid({ overallPsr, recoveredRevenue, outage }: Props) {
+export function MetricGrid({ overallPsr, psrDelta, recoveredRevenue, outage }: Props) {
   return (
     <div className="grid border-b-2 border-ink md:grid-cols-2 xl:grid-cols-4">
       <Metric icon={<Activity size={18} />} label="Live overall PSR" value={`${overallPsr.toFixed(2)}%`} accent="blue">
-        <span className="bg-bauhaus-blue px-2 py-1 text-white">+3.27%</span>
+        <span className={`px-2 py-1 text-white ${psrDelta >= 0 ? "bg-bauhaus-blue" : "bg-bauhaus-red"}`}>
+          {psrDelta >= 0 ? "+" : ""}{psrDelta.toFixed(2)}%
+        </span>
       </Metric>
       <Metric icon={<CircleDollarSign size={18} />} label="Recovered revenue" value={`$${recoveredRevenue.toFixed(2)}`} accent="yellow">
         <span className="font-mono text-[9px] uppercase">{outage ? "Failover protected" : "Baseline protected"}</span>

@@ -70,7 +70,7 @@ export default function Home() {
             <FlowBoard gateways={gateways} outage={chaosMode} algorithm={simulation.algorithm} />
           </div>
 
-          <MetricGrid overallPsr={simulation.overallPsr} recoveredRevenue={simulation.recoveredRevenue} outage={chaosMode} />
+          <MetricGrid overallPsr={simulation.overallPsr} psrDelta={simulation.psrDelta} recoveredRevenue={simulation.recoveredRevenue} outage={chaosMode} />
 
           <div className="grid gap-0 xl:grid-cols-[1.4fr_1fr]">
             <div className="border-b-2 border-ink p-5 md:p-7 xl:border-r-2 xl:border-b-0">
@@ -93,12 +93,22 @@ export default function Home() {
                 <motion.div animate={{ width: `${gateways[1].load}%` }} className="bg-bauhaus-blue" />
               </div>
               <div className="space-y-4 font-mono text-xs font-bold uppercase">
-                {gateways.map((gateway) => (
+                {gateways.map((gateway) => {
+                  const isMab = simulation.algorithm === "mab";
+                  const exploitGateway = gateways[0].psr >= gateways[1].psr ? gateways[0].code : gateways[1].code;
+                  const allocationLabel = isMab
+                    ? gateway.code === exploitGateway
+                      ? `${gateway.code} (Exploit: 95%)`
+                      : `${gateway.code} (Explore / Probe: 5%)`
+                    : gateway.name;
+
+                  return (
                   <div key={gateway.code} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2"><Circle size={10} fill={gateway.color === "red" ? "#E63926" : "#1D4ED8"} />{gateway.name}</span>
+                    <span className="flex items-center gap-2"><Circle size={10} fill={gateway.color === "red" ? "#E63926" : "#1D4ED8"} />{allocationLabel}</span>
                     <span>{gateway.load}%</span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-10 border-2 border-ink bg-bauhaus-yellow p-4 font-mono text-[10px] font-bold uppercase leading-relaxed">
                 <span className="mb-1 block">Bandit signal</span>
