@@ -1,20 +1,40 @@
 import os
+import random
+import threading
 import time
 import json
 from uuid import uuid4
 
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
 import redis
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 
 from .models import PaymentRequest, PaymentResponse, PaymentWebhookEvent
 
 PRIMARY_GATEWAY = "Gateway A"
 BACKUP_GATEWAY = "Gateway B"
-HEALTH_THRESHOLD = 75.0
+EXPLORATION_RATE = 0.05
 ROLLING_WINDOW_SECONDS = 15 * 60
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 REDIS_KEY_PREFIX = "gateway-events:"
 PAYMENT_OUTCOMES_CHANNEL = "payment-outcomes"
+
+gateway_psr = Gauge(
+    "gateway_psr_percent",
+    "Payment Success Rate over the rolling window.",
+    ["gateway"],
+)
+failover_decisions = Counter(
+    "routing_failover_decisions_total",
+    "Routing decisions that selected a non-best gateway.",
+)
+average_routing_latency = Gauge(
+    "routing_latency_average_seconds",
+    "Average routing decision latency in seconds.",
+)
+latency_lock = threading.Lock()
+routing_latency_total = 0.0
+routing_decision_count = 0
 
 app = FastAPI(
     title="Payment Gateway Routing API",
@@ -47,16 +67,43 @@ def get_gateway_health(gateway_name: str) -> float:
 
 
 def select_gateway() -> str:
-    """Select the primary unless its rolling PSR is below the health threshold."""
-    if get_gateway_health(PRIMARY_GATEWAY) < HEALTH_THRESHOLD:
-        return BACKUP_GATEWAY
-    return PRIMARY_GATEWAY
+    """Select a gateway with epsilon-greedy exploration over rolling PSRs."""
+    gateway_health = {
+        PRIMARY_GATEWAY: get_gateway_health(PRIMARY_GATEWAY),
+        BACKUP_GATEWAY: get_gateway_health(BACKUP_GATEWAY),
+    }
+    for gateway, psr in gateway_health.items():
+        gateway_psr.labels(gateway=gateway).set(psr)
+
+    best_gateway = max(gateway_health, key=gateway_health.get)
+    alternative_gateway = (
+        BACKUP_GATEWAY if best_gateway == PRIMARY_GATEWAY else PRIMARY_GATEWAY
+    )
+
+    selected_gateway = (
+        alternative_gateway if random.random() < EXPLORATION_RATE else best_gateway
+    )
+    if selected_gateway != best_gateway:
+        failover_decisions.inc()
+    return selected_gateway
+
+
+def update_routing_latency(start_time: float) -> None:
+    global routing_latency_total, routing_decision_count
+    with latency_lock:
+        routing_latency_total += time.perf_counter() - start_time
+        routing_decision_count += 1
+        average_routing_latency.set(routing_latency_total / routing_decision_count)
 
 
 @app.post("/route-payment", response_model=PaymentResponse)
 def route_payment(payment: PaymentRequest) -> PaymentResponse:
     transaction_id = str(uuid4())
-    gateway = select_gateway()
+    routing_start = time.perf_counter()
+    try:
+        gateway = select_gateway()
+    finally:
+        update_routing_latency(routing_start)
     return PaymentResponse(
         transaction_id=transaction_id,
         merchant_id=payment.merchant_id,
@@ -64,6 +111,13 @@ def route_payment(payment: PaymentRequest) -> PaymentResponse:
         currency=payment.currency,
         gateway=gateway,
     )
+
+
+@app.get("/metrics")
+def metrics() -> Response:
+    for gateway in (PRIMARY_GATEWAY, BACKUP_GATEWAY):
+        gateway_psr.labels(gateway=gateway).set(get_gateway_health(gateway))
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/webhook/{gateway}")
