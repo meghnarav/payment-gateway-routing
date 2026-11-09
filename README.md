@@ -229,6 +229,10 @@ sql/05_payment_transactions.sql  Durable API transaction table
 Dockerfile                 API and worker image
 docker-compose.yml         Full local distributed stack
 prometheus.yml             Prometheus scrape configuration
+dashboard/app/page.tsx     Next.js dashboard entry point
+dashboard/app/components/  Dashboard UI components
+dashboard/app/lib/         Simulation and report-export modules
+dashboard/package.json     Dashboard dependencies and scripts
 ```
 
 ## Existing analytical workflows
