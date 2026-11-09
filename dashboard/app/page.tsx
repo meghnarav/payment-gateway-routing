@@ -79,7 +79,7 @@ export default function Home() {
                   <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em]">02 / performance analytics</div>
                   <h2 className="text-2xl font-black uppercase tracking-[-0.05em]">Throughput velocity</h2>
                 </div>
-                <div className="font-mono text-xs font-bold">LAST 90 MIN</div>
+                <div className="font-mono text-xs font-bold">LAST 15 SIMULATION WINDOWS</div>
               </div>
               <TimeSeriesChart data={simulation.psrHistory} />
             </div>

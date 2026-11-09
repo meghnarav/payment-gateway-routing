@@ -36,6 +36,7 @@ const WINDOW_TICKS = 15;
 const PRIMARY_PSR = 0.985;
 const PRIMARY_OUTAGE_PSR = 0.35;
 const BACKUP_PSR = 0.97;
+const RECOVERED_REVENUE_PER_TRANSACTION = 42.5;
 
 const statusFor = (psr: number): GatewayStatus => {
   if (psr >= 95) return "HEALTHY";
@@ -45,6 +46,8 @@ const statusFor = (psr: number): GatewayStatus => {
 
 const sampleSuccesses = (transactions: number, probability: number) =>
   Array.from({ length: transactions }, () => Math.random() < probability).filter(Boolean).length;
+
+const latencyPenaltyFor = (latency: number) => Math.max(0, (latency - 200) / 20000);
 
 export function usePaymentSimulation() {
   const [outage, setOutage] = useState(false);
@@ -86,7 +89,7 @@ export function usePaymentSimulation() {
               : Math.random() < 0.05
                 ? bestGateway === "primary" ? "backup" : "primary"
                 : bestGateway;
-        const latencyPenalty = Math.max(0, (latency - 200) / 20000);
+        const latencyPenalty = latencyPenaltyFor(latency);
         const primaryProbability = Math.max(
           0,
           (outage ? PRIMARY_OUTAGE_PSR : PRIMARY_PSR) - latencyPenalty
@@ -136,9 +139,13 @@ export function usePaymentSimulation() {
     }
 
     if (algorithm === "rolling") {
-      return primaryIsDegraded
+      return outage || primaryIsDegraded
         ? { primary: 0, backup: 100 }
         : { primary: 100, backup: 0 };
+    }
+
+    if (outage) {
+      return { primary: 5, backup: 95 };
     }
 
     return gateways[0].psr >= gateways[1].psr
@@ -159,21 +166,26 @@ export function usePaymentSimulation() {
       const window = history.slice(Math.max(0, index - WINDOW_TICKS + 1), index + 1);
       return {
         tick: index + 1,
-        primary: rollingPsr(window, "primary"),
-        backup: rollingPsr(window, "backup")
+        primary: rollingPsr(window, "primary", outage),
+        backup: rollingPsr(window, "backup", outage)
       };
     });
-  }, [history]);
+  }, [history, outage]);
 
-  const staticBaselinePsr = gatewaysWithAllocation[0].psr;
+  const latencyPenalty = latencyPenaltyFor(latency);
+  const staticBaselinePsr =
+    (outage ? PRIMARY_OUTAGE_PSR : PRIMARY_PSR) * 100 -
+    latencyPenalty * 100;
   const overallPsr = useMemo(
-    () => gatewaysWithAllocation.reduce(
-      (sum, gateway) => sum + gateway.psr * (gateway.load / 100),
-      0
-    ),
-    [gatewaysWithAllocation]
+    () => algorithm === "static"
+      ? staticBaselinePsr
+      : gatewaysWithAllocation.reduce(
+          (sum, gateway) => sum + gateway.psr * (gateway.load / 100),
+          0
+        ),
+    [algorithm, gatewaysWithAllocation, staticBaselinePsr]
   );
-  const psrDelta = overallPsr - staticBaselinePsr;
+  const psrDelta = algorithm === "static" ? 0 : overallPsr - staticBaselinePsr;
   const recoveredTransactions = algorithm === "static"
     ? 0
     : Math.max(0, ticks * TICK_RATE * (psrDelta / 100));
@@ -187,7 +199,9 @@ export function usePaymentSimulation() {
     outage,
     setOutage,
     recoveredTransactions,
-    recoveredRevenue: recoveredTransactions * 42.5,
+    recoveredRevenue: algorithm === "static"
+      ? 0
+      : recoveredTransactions * RECOVERED_REVENUE_PER_TRANSACTION,
     overallPsr,
     staticBaselinePsr,
     psrDelta,
@@ -198,9 +212,19 @@ export function usePaymentSimulation() {
   };
 }
 
-function rollingPsr(ticks: Tick[], gateway: Tick["gateway"]) {
+function rollingPsr(
+  ticks: Tick[],
+  gateway: Tick["gateway"],
+  outage: boolean
+) {
   const gatewayTicks = ticks.filter((tick) => tick.gateway === gateway);
   const transactions = gatewayTicks.reduce((sum, tick) => sum + tick.transactions, 0);
   const successes = gatewayTicks.reduce((sum, tick) => sum + tick.successes, 0);
-  return transactions ? (successes / transactions) * 100 : 100;
+  if (transactions) {
+    return (successes / transactions) * 100;
+  }
+
+  return gateway === "primary"
+    ? (outage ? PRIMARY_OUTAGE_PSR : PRIMARY_PSR) * 100
+    : BACKUP_PSR * 100;
 }
