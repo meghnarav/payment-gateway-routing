@@ -20,7 +20,7 @@ const FLOW = {
   ingress: { x: 190, y: 165 },
   routerIn: { x: 430, y: 165 },
   routerOut: { x: 570, y: 165 },
-  fork: { x: 650, y: 165 },
+  fork: { x: 670, y: 165 },
   primary: { x: 810, y: 95 },
   backup: { x: 810, y: 235 }
 } as const;
@@ -31,11 +31,6 @@ const packetColor = {
   rerouted: "#F5C400"
 } as const;
 
-const pathFor = (gateway: Packet["gateway"]) => {
-  const target = FLOW[gateway === "primary" ? "primary" : "backup"];
-  return `M ${FLOW.ingress.x} ${FLOW.ingress.y} H ${FLOW.routerIn.x} H ${FLOW.routerOut.x} H ${FLOW.fork.x} V ${target.y} H ${target.x}`;
-};
-
 export function FlowBoard({ gateways, outage, algorithm }: Props) {
   const [packets, setPackets] = useState<Packet[]>([]);
   const leader = gateways.reduce((best, gateway) => (gateway.psr > best.psr ? gateway : best));
@@ -43,7 +38,9 @@ export function FlowBoard({ gateways, outage, algorithm }: Props) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setPackets((current) => {
-        const gateway: Packet["gateway"] = Math.random() < leader.load / 100 ? "primary" : "backup";
+        const targetGateway: Packet["gateway"] =
+          Math.random() * 100 < gateways[0].load ? "primary" : "backup";
+        const gateway = targetGateway;
         const selected = gateways[gateway === "primary" ? 0 : 1];
         const rerouted = algorithm !== "static" && selected.code !== leader.code;
         const outcome: Packet["outcome"] = rerouted
@@ -57,7 +54,7 @@ export function FlowBoard({ gateways, outage, algorithm }: Props) {
     }, 420);
 
     return () => window.clearInterval(timer);
-  }, [algorithm, gateways, leader.code, leader.load]);
+  }, [algorithm, gateways, leader.code]);
 
   return (
     <div className="relative overflow-hidden border-2 border-ink bg-white p-4 md:p-6">
@@ -117,7 +114,11 @@ export function FlowBoard({ gateways, outage, algorithm }: Props) {
                   cy: [FLOW.ingress.y, FLOW.ingress.y, FLOW.routerOut.y, FLOW.fork.y, target.y, target.y],
                   opacity: [0, 1, 1, 1, 1, 0]
                 }}
-                transition={{ duration: 1.5, ease: "linear", times: [0, 0.2, 0.4, 0.58, 0.78, 1] }}
+                transition={{
+                duration: 1.5,
+                ease: "linear",
+                times: [0, 0.32, 0.51, 0.65, 0.83, 1]
+                }}
               />
             );
           })}
